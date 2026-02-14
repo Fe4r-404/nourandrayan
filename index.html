@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Midnight Romance</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&family=Dancing+Script:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #050505;
+            --deep-purple: #2e1065;
+            --crimson: #991b1b;
+            --vibrant-red: #dc2626;
+            --accent-purple: #7e22ce;
+            --gold: #d4af37;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-dark);
+            color: #f3f4f6;
+            margin: 0;
+            overflow-x: hidden;
+        }
+
+        .serif { font-family: 'Playfair Display', serif; }
+        .handwritten { font-family: 'Dancing Script', cursive; }
+
+        /* Background Glows */
+        .glow {
+            position: fixed;
+            width: 50vw;
+            height: 50vw;
+            border-radius: 50%;
+            filter: blur(120px);
+            z-index: -1;
+            opacity: 0.12;
+            pointer-events: none;
+            transition: all 1s ease;
+        }
+
+        /* View Management */
+        .view {
+            display: none;
+            min-height: 100vh;
+            width: 100%;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+
+        .view.active {
+            display: flex;
+            flex-direction: column;
+            opacity: 1;
+        }
+
+        /* Hero Text Fading */
+        .fade-in-text {
+            animation: fadeInOut 6s ease-in-out infinite;
+        }
+
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; transform: translateY(10px); }
+            20%, 80% { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Flower Card Design */
+        .flower-card {
+            background: linear-gradient(145deg, #121212, #050505);
+            border: 1px solid rgba(126, 34, 206, 0.15);
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .flower-card:hover {
+            border-color: var(--vibrant-red);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 15px 40px rgba(220, 38, 38, 0.2);
+        }
+
+        .flower-card svg {
+            filter: drop-shadow(0 0 8px currentColor);
+            transition: filter 0.3s ease;
+        }
+
+        .flower-card:hover svg {
+            filter: drop-shadow(0 0 15px currentColor);
+        }
+
+        /* Modal / Letter Styling */
+        #letterModal {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            z-index: 500;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(8px);
+            padding: 20px;
+        }
+
+        .letter-content {
+            background: #fffafa; 
+            color: #1a1a1a;
+            max-width: 550px;
+            width: 100%;
+            padding: 2.5rem;
+            position: relative;
+            box-shadow: 0 0 60px rgba(153, 27, 27, 0.3);
+            border: 1px solid #eee;
+            max-height: 85vh;
+            overflow-y: auto;
+            border-radius: 4px;
+        }
+
+        /* Particles */
+        #sparkleCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .btn-nav {
+            background: linear-gradient(45deg, var(--crimson), var(--accent-purple));
+            box-shadow: 0 4px 15px rgba(153, 27, 27, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-nav:hover {
+            filter: brightness(1.2);
+            transform: scale(1.05) translateY(-2px);
+        }
+
+        /* Surprise Overlay */
+        #surpriseOverlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #fireworksCanvas {
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .balloon {
+            position: absolute;
+            bottom: -100px;
+            border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%;
+            opacity: 0.6;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body class="bg-black">
+
+    <audio id="bgMusic" loop>
+    <source src="music.mp3" type="audio/mpeg">
+    </audio>
+
+    <div id="red-glow" class="glow top-[-10%] left-[-10%]" style="background: var(--vibrant-red);"></div>
+    <div id="purple-glow" class="glow bottom-[-10%] right-[-10%]" style="background: var(--accent-purple);"></div>
+
+    <canvas id="sparkleCanvas"></canvas>
+
+    <!-- VIEW 1: HOME -->
+    <div id="view-home" class="view active items-center justify-center text-center px-4">
+        <div class="max-w-3xl space-y-8">
+            <h1 class="text-6xl md:text-9xl font-bold mb-4 serif tracking-tighter text-white">
+                Nour <span class="text-red-600">&</span> Rayan
+            </h1>
+            <div class="h-16 flex items-center justify-center">
+                <p id="deep-message" class="fade-in-text text-xl md:text-3xl italic text-purple-300">In the darkness, your light is all I see...</p>
+            </div>
+            <div class="pt-16">
+                <button onclick="startExperience()" class="btn-nav text-white font-bold py-5 px-14 rounded-full text-lg uppercase tracking-[0.3em]">
+                    Enter the Garden
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: DIGITAL GARDEN -->
+    <div id="view-garden" class="view py-24 px-4 overflow-y-auto">
+        <div class="max-w-6xl mx-auto w-full">
+            <div class="text-center mb-16">
+                <h2 class="text-5xl md:text-7xl font-bold mb-6 serif text-white">The Eternal Garden</h2>
+                <p class="text-gray-400 max-w-xl mx-auto text-lg">Eight blooms for the eight wonders of my world. Click each one to uncover a piece.</p>
+            </div>
+
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-6" id="flower-grid">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="mt-24 text-center">
+                <button onclick="showView('surprise')" class="btn-nav text-white font-bold py-5 px-14 rounded-full text-lg uppercase tracking-[0.3em]">
+                    The Final Ignite
+                </button>
+                <p class="mt-8 text-xs text-gray-500 uppercase tracking-widest cursor-pointer hover:text-white transition-colors" onclick="showView('home')">← Return to Entrance</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 3: SURPRISE -->
+    <div id="view-surprise" class="view relative">
+        <div id="surpriseOverlay">
+            <canvas id="fireworksCanvas"></canvas>
+            <div class="absolute z-10 text-center text-white pointer-events-none p-4">
+                <h2 class="text-6xl md:text-[10rem] font-bold mb-8 serif text-red-600 drop-shadow-[0_0_30px_rgba(220,38,38,1)]">I Love You</h2>
+                <p class="text-2xl md:text-5xl italic handwritten text-purple-200">Across every shadow and every star.</p>
+                <div class="mt-20 pointer-events-auto">
+                    <button onclick="showView('garden')" class="text-xs uppercase tracking-widest border border-red-600/50 px-10 py-4 rounded-full hover:bg-red-600/20 transition-all">Back to Garden</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Letter Modal -->
+    <div id="letterModal" onclick="closeModal()">
+        <div class="letter-content" onclick="event.stopPropagation()">
+            <button onclick="closeModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-600 text-3xl font-light">&times;</button>
+            <div id="letterBody" class="space-y-6">
+                <!-- Populated by JS -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- Navigation Logic ---
+        function showView(viewId) {
+            surpriseActive = false;
+            document.querySelectorAll('.view').forEach(v => {
+                v.classList.remove('active');
+                v.style.display = 'none';
+            });
+            
+            const targetView = document.getElementById('view-' + viewId);
+            targetView.style.display = (viewId === 'home' || viewId === 'surprise') ? 'flex' : 'block';
+            
+            setTimeout(() => {
+                targetView.classList.add('active');
+            }, 10);
+
+            if (viewId === 'surprise') {
+                triggerSurprise();
+            }
+
+            window.scrollTo(0,0);
+        }
+
+        // --- Data ---
+        const messages = [
+            "In the darkness, your light is all I see...",
+            "Every heartbeat whispers your name.",
+            "You are the red in my world of shadows.",
+            "A feeling as deep as the midnight sky.",
+            "My soul found its mirror in you."
+        ];
+
+        const flowers = [
+            { 
+                name: 'Velvet Rose', color: '#dc2626',
+                svg: `
+                <g fill="currentColor">
+                    <path d="M50 35c-5-10-25-10-25 10s25 35 25 35 25-15 25-35-20-20-25-10z" opacity="0.8"/>
+                    <path d="M50 40c-3-6-15-6-15 5s15 20 15 20 15-9 15-20-12-11-15-5z"/>
+                    <path d="M45 80c0-10 5-15 5-15s5 5 5 15v15h-10z" fill="#064e3b" opacity="0.4"/>
+                </g>`,
+                letter: `<h3>To my Eternal Flame,</h3><p class="handwritten text-2xl">The rose is red, but its beauty fades compared to yours. Thank you for being the passion that keeps my world alive. I thank you more than words could ever describe.</p>`
+            },
+            { 
+                name: 'Exotic Orchid', color: '#7e22ce',
+                svg: `
+                <g fill="currentColor">
+                    <ellipse cx="50" cy="50" rx="30" ry="10" transform="rotate(45 50 50)" opacity="0.6"/>
+                    <ellipse cx="50" cy="50" rx="30" ry="10" transform="rotate(-45 50 50)" opacity="0.6"/>
+                    <path d="M50 30c5 10 15 20 0 40-15-20-5-30 0-40z"/>
+                    <circle cx="50" cy="55" r="5" fill="#facc15"/>
+                </g>`,
+                letter: `<h3>Dearest,</h3><p class="handwritten text-2xl">Like the orchid, our connection is rare and exotic. It flourishes in places others might find impossible. You make the ordinary feel magical every single day.</p>`
+            },
+            { 
+                name: 'Elegant Lily', color: '#9333ea',
+                svg: `
+                <g fill="currentColor">
+                    <path d="M50 15c-10 20-20 30-20 45s10 25 20 25 20-10 20-25-10-25-20-45z" opacity="0.8"/>
+                    <path d="M50 25c-5 15-12 25-12 35s7 15 12 15 12-5 12-15-7-20-12-35z"/>
+                    <rect x="49" y="40" width="2" height="20" fill="#facc15" opacity="0.6"/>
+                </g>`,
+                letter: `<h3>My Beloved,</h3><p class="handwritten text-2xl">They say lilies represent purity. To me, you represent a pure, unshakeable devotion. Even in the shadows, your grace shines through.</p>`
+            },
+            { 
+                name: 'Midnight Tulip', color: '#991b1b',
+                svg: `
+                <g fill="currentColor">
+                    <path d="M30 45c0-15 10-25 20-25s20 10 20 25v15c0 15-10 25-20 25s-20-10-20-25z" opacity="0.7"/>
+                    <path d="M35 45c0-10 8-15 15-15s15 5 15 15v10c0 10-8 15-15 15s-15-5-15-15z"/>
+                </g>`,
+                letter: `<h3>My Sweetest,</h3><p class="handwritten text-2xl">The tulip is a symbol of perfect love. That is exactly what we have found together. Every moment spent with you is a treasure I'll protect forever.</p>`
+            },
+            { 
+                name: 'Violet Jasmine', color: '#a855f7',
+                svg: `
+                <g fill="currentColor">
+                    <circle cx="50" cy="35" r="12" opacity="0.5"/>
+                    <circle cx="35" cy="50" r="12" opacity="0.5"/>
+                    <circle cx="65" cy="50" r="12" opacity="0.5"/>
+                    <circle cx="50" cy="65" r="12" opacity="0.5"/>
+                    <circle cx="50" cy="50" r="8" fill="#facc15"/>
+                </g>`,
+                letter: `<h3>My Sweet Grace,</h3><p class="handwritten text-2xl">The scent of jasmine fills the air with peace. Your presence in my life has brought a serenity I never knew I was missing.</p>`
+            },
+            { 
+                name: 'Dark Lotus', color: '#4c1d95',
+                svg: `
+                <g fill="currentColor">
+                    <path d="M50 20c15 10 30 40 0 60-30-20-15-50 0-60z" opacity="0.6"/>
+                    <path d="M20 50c10-15 40-30 60 0-20 30-50 15-60 0z" opacity="0.4" transform="rotate(45 50 50)"/>
+                    <path d="M20 50c10-15 40-30 60 0-20 30-50 15-60 0z" opacity="0.4" transform="rotate(-45 50 50)"/>
+                    <circle cx="50" cy="50" r="8"/>
+                </g>`,
+                letter: `<h3>To my Anchor,</h3><p class="handwritten text-2xl">The lotus blooms even in the muddiest waters. No matter what challenges we face, our love remains beautiful and unbroken.</p>`
+            },
+            { 
+                name: 'Nova Bloom', color: '#facc15',
+                svg: `
+                <g fill="currentColor">
+                    <path d="M50 10c2 20 10 30 40 40-30 10-38 20-40 40-2-20-10-30-40-40 30-10 38-20 40-40z" opacity="0.8"/>
+                    <circle cx="50" cy="50" r="10" opacity="0.4"/>
+                    <circle cx="50" cy="50" r="5"/>
+                </g>`,
+                letter: `<h3>My Guiding Star,</h3><p class="handwritten text-2xl">You are my North Star. Whenever I am lost, I simply look to you and find my way back to where I belong—right by your side.</p>`
+            },
+            { 
+                name: 'Dahlia Noir', color: '#1f1f1f',
+                svg: `
+                <g fill="currentColor">
+                    <circle cx="50" cy="50" r="40" opacity="0.2"/>
+                    <path d="M50 20v60M20 50h60" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                    <path d="M30 30l40 40M30 70l40-40" stroke="currentColor" stroke-width="2" opacity="0.5"/>
+                    <rect x="40" y="40" width="20" height="20" transform="rotate(45 50 50)"/>
+                </g>`,
+                letter: `<h3>My Mystery,</h3><p class="handwritten text-2xl">You are the most beautiful mystery I have ever had the privilege of solving. Every day with you is a new discovery.</p>`
+            }
+        ];
+
+        // --- Population ---
+        const grid = document.getElementById('flower-grid');
+        flowers.forEach((flower, idx) => {
+            const card = document.createElement('div');
+            card.className = 'flower-card p-6 md:p-10 rounded-2xl text-center flex flex-col items-center';
+            card.innerHTML = `
+                <div class="mb-4" style="color: ${flower.color}">
+                    <svg width="80" height="80" viewBox="0 0 100 100">${flower.svg}</svg>
+                </div>
+                <h3 class="text-sm md:text-lg font-bold serif mb-2 text-white">${flower.name}</h3>
+                <span class="text-[10px] uppercase tracking-[0.2em] text-red-500 opacity-60">Read Letter</span>
+            `;
+            card.onclick = () => openLetter(idx);
+            grid.appendChild(card);
+        });
+
+        // --- Letter Logic ---
+        function openLetter(idx) {
+            const body = document.getElementById('letterBody');
+            body.innerHTML = flowers[idx].letter + `<p class="mt-8 text-right handwritten text-2xl">— Forever Yours</p>`;
+            document.getElementById('letterModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('letterModal').style.display = 'none';
+        }
+
+        // --- Sparkles ---
+        const sCanvas = document.getElementById('sparkleCanvas');
+        const sCtx = sCanvas.getContext('2d');
+        let particles = [];
+        
+        function resize() {
+            sCanvas.width = window.innerWidth;
+            sCanvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        window.addEventListener('mousemove', (e) => {
+            for(let i = 0; i < 2; i++) particles.push(new Particle(e.clientX, e.clientY));
+        });
+
+        class Particle {
+            constructor(x, y) {
+                this.x = x; this.y = y;
+                this.size = Math.random() * 2 + 0.5;
+                this.vx = (Math.random() - 0.5) * 1.5;
+                this.vy = (Math.random() - 0.5) * 1.5;
+                this.color = Math.random() > 0.6 ? '#dc2626' : '#7e22ce';
+                this.life = 100;
+            }
+            update() { this.x += this.vx; this.y += this.vy; this.life -= 1.5; }
+            draw() {
+                sCtx.fillStyle = this.color;
+                sCtx.globalAlpha = this.life / 100;
+                sCtx.beginPath(); sCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2); sCtx.fill();
+            }
+        }
+
+        function animateS() {
+            sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+            particles = particles.filter(p => p.life > 0);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateS);
+        }
+        animateS();
+
+        // --- Fireworks ---
+        const fwCanvas = document.getElementById('fireworksCanvas');
+        const fwCtx = fwCanvas.getContext('2d');
+        let fireworks = [];
+        let surpriseActive = false;
+
+        function triggerSurprise() {
+            surpriseActive = true;
+            resizeFW();
+            animateFW();
+            launchBalloons();
+        }
+
+        function resizeFW() {
+            fwCanvas.width = window.innerWidth;
+            fwCanvas.height = window.innerHeight;
+        }
+
+        class Firework {
+            constructor() {
+                this.x = Math.random() * fwCanvas.width;
+                this.y = fwCanvas.height;
+                this.targetY = Math.random() * (fwCanvas.height / 3);
+                this.exploded = false;
+                this.parts = [];
+                this.color = `hsl(${Math.random() * 30 + 340}, 100%, 50%)`;
+            }
+            update() {
+                if(!this.exploded) {
+                    this.y -= 5;
+                    if(this.y <= this.targetY) this.explode();
+                } else {
+                    this.parts.forEach((p, i) => {
+                        p.x += p.vx; p.y += p.vy;
+                        p.vy += 0.05; p.alpha -= 0.01;
+                        if(p.alpha <= 0) this.parts.splice(i, 1);
+                    });
+                }
+            }
+            explode() {
+                this.exploded = true;
+                for(let i=0; i<60; i++) {
+                    const a = Math.random() * Math.PI * 2;
+                    const s = Math.random() * 5 + 2;
+                    this.parts.push({ x: this.x, y: this.y, vx: Math.cos(a)*s, vy: Math.sin(a)*s, alpha: 1 });
+                }
+            }
+            draw() {
+                fwCtx.fillStyle = this.color;
+                if(!this.exploded) {
+                    fwCtx.beginPath(); fwCtx.arc(this.x, this.y, 3, 0, Math.PI*2); fwCtx.fill();
+                } else {
+                    this.parts.forEach(p => {
+                        fwCtx.globalAlpha = p.alpha;
+                        fwCtx.beginPath(); fwCtx.arc(p.x, p.y, 2, 0, Math.PI*2); fwCtx.fill();
+                    });
+                }
+            }
+        }
+
+        function animateFW() {
+            if(!surpriseActive) return;
+            fwCtx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+            fwCtx.fillRect(0, 0, fwCanvas.width, fwCanvas.height);
+            if(Math.random() < 0.08) fireworks.push(new Firework());
+            fireworks = fireworks.filter(f => !f.exploded || f.parts.length > 0);
+            fireworks.forEach(f => { f.update(); f.draw(); });
+            requestAnimationFrame(animateFW);
+        }
+
+        function launchBalloons() {
+            const overlay = document.getElementById('surpriseOverlay');
+            const colors = ['#dc2626', '#7e22ce', '#991b1b'];
+            const interval = setInterval(() => {
+                if(!surpriseActive) { clearInterval(interval); return; }
+                const b = document.createElement('div');
+                b.className = 'balloon';
+                b.style.width = '50px'; b.style.height = '65px';
+                b.style.left = Math.random() * 100 + 'vw';
+                b.style.background = colors[Math.floor(Math.random() * colors.length)];
+                overlay.appendChild(b);
+                const anim = b.animate([
+                    { transform: 'translateY(0) rotate(0deg)', opacity: 0.6 },
+                    { transform: `translateY(-120vh) rotate(${Math.random()*40-20}deg)`, opacity: 0 }
+                ], { duration: 6000 + Math.random()*2000, easing: 'linear' });
+                anim.onfinish = () => b.remove();
+            }, 400);
+        }
+
+        function startExperience() {
+        const music = document.getElementById("bgMusic");
+        music.volume = 0;
+        music.play().catch(() => {});
+    
+        let fade = setInterval(() => {
+        if (music.volume < 0.4) {
+            music.volume += 0.02;
+        } else {
+            clearInterval(fade);
+        }
+        }, 200);
+
+        showView('garden');
+        }
+
+        // --- Message Loop ---
+        let msgIdx = 0;
+        const msgEl = document.getElementById('deep-message');
+        setInterval(() => {
+            msgIdx = (msgIdx + 1) % messages.length;
+            msgEl.style.opacity = '0';
+            setTimeout(() => {
+                msgEl.textContent = messages[msgIdx];
+                msgEl.style.opacity = '1';
+            }, 600);
+        }, 6000);
+    </script>
+</body>
+</html>
